@@ -1,0 +1,34 @@
+version: 0.2
+
+env:
+  variables:
+    ECR_REPO: "dash-streamlit"
+
+phases:
+  pre_build:
+    commands:
+      - echo "Logging into Amazon ECR..."
+      - aws --version
+      # Get account id
+      - ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+      - IMAGE_TAG=$CODEBUILD_RESOLVED_SOURCE_VERSION
+      - IMAGE_URI=${ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${ECR_REPO}:${IMAGE_TAG}
+      - echo "IMAGE_URI=${IMAGE_URI}"
+      - aws ecr get-login-password --region ${AWS_DEFAULT_REGION} \
+        | docker login --username AWS --password-stdin ${ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com
+
+  build:
+    commands:
+      - echo "Building Docker image..."
+      - docker build -t ${IMAGE_URI} .
+
+  post_build:
+    commands:
+      - echo "Pushing image to ECR..."
+      - docker push ${IMAGE_URI}
+      - printf '{"imageUri":"%s"}' "${IMAGE_URI}" > imageDetail.json
+      - echo "Build and push complete."
+
+artifacts:
+  files:
+    - imageDetail.json
