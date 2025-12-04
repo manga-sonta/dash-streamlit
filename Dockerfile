@@ -21,11 +21,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY app.py .
 
 # Streamlit listens on 8501 by default
-EXPOSE 8501
+EXPOSE 80
 
 # App Runner will just run this command to start the app
 CMD ["streamlit", "run", "app.py",
-     "--server.port=8080",
+     "--server.port=80",
      "--server.address=0.0.0.0",
      "--server.enableCORS=false",
      "--server.enableXsrfProtection=false"]
